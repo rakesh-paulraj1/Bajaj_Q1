@@ -1,4 +1,3 @@
-"use client"
 
 // import { useTheme } from 'next-themes';
 import { Award } from 'lucide-react';

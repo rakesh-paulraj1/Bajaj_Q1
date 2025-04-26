@@ -1,44 +1,47 @@
 
 
-import { useState} from 'react';
-
-
+import { useEffect,useMemo, useState} from 'react';
 interface Doctor {
   id: string;
   name: string;
 }
-
 interface SearchBarProps {
   doctors: Doctor[];
   initialQuery?: string;
   onSearch: (query: string) => void; 
 }
-
 export const SearchBar: React.FC<SearchBarProps> = ({ doctors, initialQuery = '', onSearch }) => {
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<Doctor[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
  
+ //for handlig large amount of data
+  const filteredDoctors = useMemo(() => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return [];
+    const searchLower = trimmedQuery.toLowerCase();
+    return doctors.filter(doctor => doctor.name.toLowerCase().includes(searchLower));
+  }, [query, doctors]);
+
+//for providing time delay in search
+ useEffect(()=>{
+  const debouncesearch = setTimeout(() => {
+    if(query.trim()){
+      onSearch(query.trim())
+     
+     setSuggestions(filteredDoctors)
+      setShowSuggestions(true)
+    }else{
+      setSuggestions([]);
+      setShowSuggestions(false)
+    }
+  },300)
+  return () => clearTimeout(debouncesearch)
+ },[query, doctors, onSearch])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    onSearch(value);
-
-    if (value.length > 0) {
-      const matches = doctors
-        .filter(doctor =>
-          doctor.name.toLowerCase().includes(value.toLowerCase())
-        )
-        .slice(0, 3);
-      setSuggestions(matches);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      
-    }
   };
 
   const handleSuggestionClick = (name: string) => {
